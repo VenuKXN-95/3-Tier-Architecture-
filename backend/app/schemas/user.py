@@ -19,7 +19,13 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=6, max_length=72)
+
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
 
 class UserResponse(BaseModel):
@@ -31,3 +37,9 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse

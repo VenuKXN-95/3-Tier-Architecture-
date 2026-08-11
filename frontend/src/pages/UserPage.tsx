@@ -19,11 +19,12 @@ const STORAGE_KEY = 'demo_user_id'
 
 export function UserPage() {
   const storedUserId = localStorage.getItem(STORAGE_KEY) ?? ''
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState(storedUserId)
 
   const { data: user, loading, error, refetch } = useData<UserType>(
@@ -31,33 +32,50 @@ export function UserPage() {
     [currentUserId],
   )
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setCreating(true)
-    setCreateError(null)
+    setSubmitting(true)
+    setErrorMsg(null)
     try {
-      const created = await usersApi.create({ name, email, password })
-      localStorage.setItem(STORAGE_KEY, created.id)
-      setCurrentUserId(created.id)
-      refetch()
+      if (mode === 'login') {
+        const res = await usersApi.login({ email, password })
+        localStorage.setItem('access_token', res.access_token)
+        localStorage.setItem(STORAGE_KEY, res.user.id)
+        setCurrentUserId(res.user.id)
+        refetch()
+      } else {
+        const created = await usersApi.create({ name, email, password })
+        // After creation, login to get JWT token
+        const loginRes = await usersApi.login({ email, password })
+        localStorage.setItem('access_token', loginRes.access_token)
+        localStorage.setItem(STORAGE_KEY, created.id)
+        setCurrentUserId(created.id)
+        refetch()
+      }
       setName('')
       setEmail('')
       setPassword('')
     } catch (err) {
-      setCreateError((err as Error).message)
+      setErrorMsg((err as Error).message)
     } finally {
-      setCreating(false)
+      setSubmitting(false)
     }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem('access_token')
+    setCurrentUserId('')
   }
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h1 className="text-xl font-semibold text-text-1 flex items-center gap-2 mb-6">
         <User className="w-5 h-5 text-violet-bright" aria-hidden="true" />
-        Profile
+        Profile & Authentication
       </h1>
 
-      {/* Current user */}
+      {/* Current user profile */}
       {loading && currentUserId && <Loading message="Loading profile…" />}
       {(error && currentUserId) && (
         <ErrorMessage message="Could not load user profile." className="mb-4" />
@@ -77,11 +95,14 @@ export function UserPage() {
               <p className="font-semibold text-text-1">{user.name}</p>
               <p className="text-xs text-text-3">{user.email}</p>
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
               <span className="inline-flex items-center gap-1 text-xs text-success bg-success/10 border border-success/20 px-2 py-1 rounded-md">
                 <CheckCircle className="w-3 h-3" aria-hidden="true" />
-                Active
+                JWT Authenticated
               </span>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                Sign Out
+              </Button>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 text-xs text-text-3">
@@ -99,37 +120,60 @@ export function UserPage() {
         </motion.div>
       )}
 
-      {/* Create user form */}
+      {/* Login / Register form */}
       {!user && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="gradient-border p-6"
         >
-          <h2 className="text-sm font-semibold text-text-1 mb-4">Create Demo User</h2>
-          <p className="text-xs text-text-3 mb-5">
-            Create a user to enable cart and order features. The user ID will be
-            stored in your browser for this session.
-          </p>
-          <form onSubmit={handleCreate} className="flex flex-col gap-4" noValidate>
-            {/* Name */}
-            <div>
-              <label htmlFor="user-name" className="block text-xs font-medium text-text-2 mb-1.5">
-                Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-3" aria-hidden="true" />
-                <input
-                  id="user-name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Venu"
-                  className="w-full bg-canvas-2 border border-white/[0.08] rounded-lg pl-9 pr-4 py-2 text-sm text-text-1 placeholder:text-text-4 focus:outline-none focus:border-violet/50 transition-colors"
-                />
+          {/* Tabs */}
+          <div className="flex border-b border-white/[0.08] mb-5">
+            <button
+              type="button"
+              onClick={() => { setMode('login'); setErrorMsg(null) }}
+              className={`pb-2.5 px-4 text-xs font-semibold border-b-2 transition-colors ${
+                mode === 'login'
+                  ? 'border-violet-bright text-text-1'
+                  : 'border-transparent text-text-3 hover:text-text-2'
+              }`}
+            >
+              Sign In (JWT)
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('register'); setErrorMsg(null) }}
+              className={`pb-2.5 px-4 text-xs font-semibold border-b-2 transition-colors ${
+                mode === 'register'
+                  ? 'border-violet-bright text-text-1'
+                  : 'border-transparent text-text-3 hover:text-text-2'
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+            {/* Name field (Register only) */}
+            {mode === 'register' && (
+              <div>
+                <label htmlFor="user-name" className="block text-xs font-medium text-text-2 mb-1.5">
+                  Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-3" aria-hidden="true" />
+                  <input
+                    id="user-name"
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Venu"
+                    className="w-full bg-canvas-2 border border-white/[0.08] rounded-lg pl-9 pr-4 py-2 text-sm text-text-1 placeholder:text-text-4 focus:outline-none focus:border-violet/50 transition-colors"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Email */}
             <div>
@@ -170,16 +214,16 @@ export function UserPage() {
               </div>
             </div>
 
-            {createError && <ErrorMessage message={createError} />}
+            {errorMsg && <ErrorMessage message={errorMsg} />}
 
             <Button
               type="submit"
               variant="primary"
               size="md"
-              loading={creating}
-              aria-label="Create user account"
+              loading={submitting}
+              aria-label={mode === 'login' ? 'Sign In' : 'Create Account'}
             >
-              Create Account
+              {mode === 'login' ? 'Sign In & Get JWT Token' : 'Create Account'}
             </Button>
           </form>
         </motion.div>
@@ -187,3 +231,4 @@ export function UserPage() {
     </div>
   )
 }
+

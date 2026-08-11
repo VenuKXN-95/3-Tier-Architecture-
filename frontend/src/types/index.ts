@@ -85,6 +85,18 @@ export interface CreateUserPayload {
   password: string;
 }
 
+export interface LoginUserPayload {
+  email: string;
+  password: string;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+
+
 export interface CreateCategoryPayload {
   name: string;
   description?: string;

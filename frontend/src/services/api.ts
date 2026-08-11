@@ -22,6 +22,8 @@ import type {
   Order,
   InventoryRecord,
   CreateUserPayload,
+  LoginUserPayload,
+  TokenResponse,
   CreateCategoryPayload,
   CreateProductPayload,
   AddToCartPayload,
@@ -111,9 +113,13 @@ export const usersApi = {
   create: (payload: CreateUserPayload) =>
     apiClient.post<User>('/api/users', payload).then((r) => r.data),
 
+  login: (payload: LoginUserPayload) =>
+    apiClient.post<TokenResponse>('/api/users/login', payload).then((r) => r.data),
+
   getOrders: (userId: string) =>
     apiClient.get<Order[]>(`/api/users/${userId}/orders`).then((r) => r.data),
 }
+
 
 // ── Inventory ─────────────────────────────────────────────────────────
 
