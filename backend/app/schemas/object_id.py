@@ -21,9 +21,7 @@ class PyObjectId(str):
                     ),
                 ]
             ),
-            serialization=core_schema.plain_serializer_function_ser_schema(
-                lambda x: str(x)
-            ),
+            serialization=core_schema.plain_serializer_function_ser_schema(str),
         )
 
     @classmethod

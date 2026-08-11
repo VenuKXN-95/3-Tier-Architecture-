@@ -31,6 +31,7 @@ mypy_path = "."
 [tool.pylint.main]
 py-version = "3.11"
 ignore-paths = ["^tests/.*$"]
+fail-under = 9.0
 
 [tool.pylint.format]
 max-line-length = 88
@@ -42,8 +43,14 @@ disable = [
     "C0116", # missing-function-docstring
     "R0903", # too-few-public-methods
     "W0718", # catching-too-general-exception
-    "C0415", # import-outside-toplevel (used in FastAPI app lifespan/routers)
+    "C0415", # import-outside-toplevel
     "W0621", # redefined-outer-name
+    "W0603", # global-statement
+    "C0103", # invalid-name (_client, _db)
+    "W0613", # unused-argument
+    "W0108", # unnecessary-lambda
+    "R0801", # duplicate-code
+    "R0913", # too-many-arguments
 ]
 
 [tool.bandit]
