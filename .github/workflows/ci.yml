@@ -19,6 +19,10 @@ jobs:
     name: Backend CI (Python / FastAPI)
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: backend
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,31 +52,31 @@ jobs:
       - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r backend/requirements-dev.txt
+          pip install -r requirements-dev.txt
 
       - name: Code Formatting Check (Black)
         run: |
-          black --check backend/app backend/tests
+          black --check app tests
 
       - name: Code Linting (Flake8)
         run: |
-          flake8 backend/app backend/tests --max-line-length=88 --extend-ignore=E203,W503,E402
+          flake8 app tests --max-line-length=88 --extend-ignore=E203,W503,E402
 
       - name: Deep Code Analysis (Pylint)
         run: |
-          pylint --rcfile=backend/pyproject.toml backend/app
+          pylint --rcfile=pyproject.toml app
 
       - name: Static Type Checking (Mypy)
         run: |
-          PYTHONPATH=backend mypy --config-file backend/pyproject.toml backend/app
+          PYTHONPATH=. mypy --config-file pyproject.toml app
 
       - name: Security Code Analysis (Bandit)
         run: |
-          bandit -r backend/app -c backend/pyproject.toml
+          bandit -r app -c pyproject.toml
 
       - name: Dependency Security Audit (pip-audit)
         run: |
-          pip-audit -r backend/requirements.txt --ignore-code PYSEC-2024-001 || true
+          pip-audit -r requirements.txt --ignore-code PYSEC-2024-001 || true
 
       - name: Run Pytest Test Suite
         env:
@@ -81,7 +85,7 @@ jobs:
           APP_NAME: "E-Commerce Test System"
           DEBUG: "true"
         run: |
-          pytest backend/tests --cov=backend/app --cov-report=xml:backend/coverage.xml --cov-report=term-missing
+          pytest tests --cov=app --cov-report=xml:coverage.xml --cov-report=term-missing
 
       - name: Upload Test Coverage Artifact
         uses: actions/upload-artifact@v4
@@ -96,6 +100,10 @@ jobs:
     name: Frontend CI (React / TypeScript)
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: frontend
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -109,27 +117,22 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-          cd frontend
           npm ci
 
       - name: Lint Frontend Code (ESLint)
         run: |
-          cd frontend
           npm run lint
 
       - name: TypeScript Type Checking (tsc)
         run: |
-          cd frontend
           npx tsc --noEmit
 
       - name: Verify Production Build (Vite)
         run: |
-          cd frontend
           npm run build
 
       - name: Dependency Security Audit (npm audit)
         run: |
-          cd frontend
           npm audit --audit-level=high || true
 
   # ───────────────────────────────────────────────────────────────────────────
@@ -164,7 +167,7 @@ jobs:
           failure-threshold: error
 
       - name: Repository Vulnerability Scan (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           ignore-unfixed: true

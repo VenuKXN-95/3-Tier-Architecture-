@@ -1,4 +1,4 @@
-# 🛒 ShopFlow — E-Commerce Order System (3-Tier MongoDB Stack)
+# ShopFlow — E-Commerce Order System (3-Tier MongoDB Stack)
 
 [![CI/CD Pipeline](https://github.com/VenuKXN-95/3-Tier-Architecture-/actions/workflows/ci.yml/badge.svg)](https://github.com/VenuKXN-95/3-Tier-Architecture-/actions/workflows/ci.yml)
 
@@ -6,7 +6,7 @@ A modern, production-grade 3-Tier E-Commerce Order System built with **React (Ty
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Task Requirements &amp; Architectural Scope](#-task-requirements--architectural-scope)
 2. [Technology Stack &amp; System Architecture](#-technology-stack--system-architecture)
@@ -19,7 +19,7 @@ A modern, production-grade 3-Tier E-Commerce Order System built with **React (Ty
 
 ---
 
-## 🎯 Task Requirements & Architectural Scope
+## Task Requirements & Architectural Scope
 
 ### Current Scope
 
@@ -42,7 +42,7 @@ Implement a complete 3-Tier web application:
 
 ---
 
-## 🏗️ Technology Stack & System Architecture
+## Technology Stack & System Architecture
 
 ```
                                 Browser (Port 80)
@@ -89,7 +89,7 @@ Implement a complete 3-Tier web application:
 
 ---
 
-## 🐳 Running with Docker Compose (Recommended)
+## Running with Docker Compose (Recommended)
 
 Running with Docker Compose spins up the full 3-tier stack with all dependencies wired automatically.
 
@@ -141,7 +141,7 @@ docker compose down -v
 
 ---
 
-## 💻 Running Manually (Local Development)
+## Running Manually (Local Development)
 
 If you wish to run the backend and frontend separately outside Docker during local development, follow these steps.
 
@@ -210,7 +210,7 @@ The React frontend will start at `http://localhost:5173`. Vite will automaticall
 
 ---
 
-## 🌱 Database Seeding
+## Database Seeding
 
 To populate the database with **5 Categories**, **50 Realistic Products with Unsplash Images**, **50 Inventory Stock Records**, and a **Demo User**, run the seed script:
 
@@ -228,7 +228,7 @@ docker compose exec backend python seed_data.py
 
 ---
 
-## 🧪 API Testing Guide (cURL & Postman)
+## API Testing Guide (cURL & Postman)
 
 ### API Endpoints Summary Table
 
@@ -420,7 +420,7 @@ curl -X POST http://localhost:8000/api/orders/<INSERT_ORDER_ID_HERE>/cancel
 
 ---
 
-## ⚡ Running Automated Tests
+## Running Automated Tests
 
 The repository contains a full pytest test suite covering all CRUD operations, inventory race conditions, and transaction rollbacks.
 
@@ -439,7 +439,7 @@ python -m pytest tests/ -v
 
 ---
 
-## 🛠️ CI/CD & Code Quality Automation
+## CI/CD & Code Quality Automation
 
 This repository includes an enterprise-grade **GitHub Actions CI/CD Pipeline** ([.github/workflows/ci.yml](file:///.github/workflows/ci.yml)) enforcing continuous testing, linting, type checking, security auditing, and container scanning.
 
@@ -503,7 +503,7 @@ npm run build
 
 ---
 
-## 🔒 Database Design & Transaction Strategy
+## Database Design & Transaction Strategy
 
 ### 1. Embedded Array for Cart
 
