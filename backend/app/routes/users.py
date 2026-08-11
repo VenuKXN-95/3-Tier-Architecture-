@@ -27,7 +27,10 @@ def login(credentials: UserLogin):
             detail="Incorrect email or password",
         )
     access_token = create_access_token(data={"sub": user["id"], "email": user["email"]})
-    return TokenResponse(access_token=access_token, token_type="bearer", user=user)
+    user_response = UserResponse(**user)
+    return TokenResponse(
+        access_token=access_token, token_type="bearer", user=user_response
+    )
 
 
 @router.get("", response_model=List[UserResponse])
