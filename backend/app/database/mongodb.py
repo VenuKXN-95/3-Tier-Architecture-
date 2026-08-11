@@ -29,7 +29,6 @@ def close_mongo_connection() -> None:
 
 
 def get_database() -> Database:
-    global _db
     if _db is None:
         connect_to_mongo()
     assert _db is not None
