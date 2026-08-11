@@ -29,7 +29,7 @@ def login(credentials: UserLogin):
     access_token = create_access_token(data={"sub": user["id"], "email": user["email"]})
     user_response = UserResponse(**user)
     return TokenResponse(
-        access_token=access_token, token_type="bearer", user=user_response
+        access_token=access_token, token_type="bearer", user=user_response  # nosec B106
     )
 
 
