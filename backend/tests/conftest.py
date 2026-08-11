@@ -35,7 +35,13 @@ from pymongo import MongoClient
 from app.main import create_app
 
 # ── Test MongoDB URI ──────────────────────────────────────────────────
-TEST_MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/?replicaSet=rs0")
+TEST_MONGO_URI = os.getenv(
+    "MONGO_URI",
+    # directConnection=true bypasses replica-set topology discovery so local
+    # tests can reach the container on host port 27018 even though the RS was
+    # initiated with the internal Docker hostname 'mongodb:27017'.
+    "mongodb://localhost:27018/?directConnection=true",
+)
 TEST_DB_NAME = "ecommerce_test"
 
 
