@@ -44,7 +44,7 @@ services:
     networks:
       - ecommerce-network
     ports:
-      - "27017:27017"     # Expose for local development tools (e.g. Compass)
+      - "27018:27017"     # Expose on port 27018 for local GUI tools (e.g. Compass) to avoid conflict with local mongod
     healthcheck:
       test: >
         mongosh --quiet --eval
