@@ -80,6 +80,7 @@ jobs:
 
       - name: Run Pytest Test Suite
         env:
+          PYTHONPATH: "."
           MONGO_URI: "mongodb://localhost:27017/?replicaSet=rs0"
           MONGO_DB_NAME: "ecommerce_test"
           APP_NAME: "E-Commerce Test System"
