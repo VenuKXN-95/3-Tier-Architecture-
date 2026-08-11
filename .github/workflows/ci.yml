@@ -1,0 +1,208 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Python Backend CI (Formatting, Linting, Typing, Security, Tests)
+  # ───────────────────────────────────────────────────────────────────────────
+  backend-ci:
+    name: Backend CI (Python / FastAPI)
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'rs.status().ok || rs.initiate({_id:\"rs0\",members:[{_id:0,host:\"localhost:27017\"}]}).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements*.txt'
+
+      - name: Ensure MongoDB Replica Set is Ready
+        run: |
+          echo "Waiting for MongoDB replica set to initialize..."
+          until docker exec $(docker ps -q -f ancestor=mongo:7) mongosh --quiet --eval "rs.status().ok" | grep -q "1"; do
+            echo "Waiting..."
+            sleep 2
+          done
+          echo "MongoDB replica set initialized successfully!"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-dev.txt
+
+      - name: Code Formatting Check (Black)
+        run: |
+          black --check backend/app backend/tests
+
+      - name: Code Linting (Flake8)
+        run: |
+          flake8 backend/app backend/tests --max-line-length=88 --extend-ignore=E203,W503,E402
+
+      - name: Deep Code Analysis (Pylint)
+        run: |
+          pylint --rcfile=backend/pyproject.toml backend/app
+
+      - name: Static Type Checking (Mypy)
+        run: |
+          PYTHONPATH=backend mypy --config-file backend/pyproject.toml backend/app
+
+      - name: Security Code Analysis (Bandit)
+        run: |
+          bandit -r backend/app -c backend/pyproject.toml
+
+      - name: Dependency Security Audit (pip-audit)
+        run: |
+          pip-audit -r backend/requirements.txt --ignore-code PYSEC-2024-001 || true
+
+      - name: Run Pytest Test Suite
+        env:
+          MONGO_URI: "mongodb://localhost:27017/?replicaSet=rs0"
+          MONGO_DB_NAME: "ecommerce_test"
+          APP_NAME: "E-Commerce Test System"
+          DEBUG: "true"
+        run: |
+          pytest backend/tests --cov=backend/app --cov-report=xml:backend/coverage.xml --cov-report=term-missing
+
+      - name: Upload Test Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: backend/coverage.xml
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # React Frontend CI (Linting, Typing, Build, Audit)
+  # ───────────────────────────────────────────────────────────────────────────
+  frontend-ci:
+    name: Frontend CI (React / TypeScript)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Lint Frontend Code (ESLint)
+        run: |
+          cd frontend
+          npm run lint
+
+      - name: TypeScript Type Checking (tsc)
+        run: |
+          cd frontend
+          npx tsc --noEmit
+
+      - name: Verify Production Build (Vite)
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Dependency Security Audit (npm audit)
+        run: |
+          cd frontend
+          npm audit --audit-level=high || true
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Security Scanning (Secrets, Hadolint, Trivy)
+  # ───────────────────────────────────────────────────────────────────────────
+  security-and-docker:
+    name: Security & Vulnerability Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Secret Leak Detection (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Lint Backend Dockerfile (Hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: backend/Dockerfile
+          failure-threshold: error
+
+      - name: Lint Frontend Dockerfile (Hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: frontend/Dockerfile
+          failure-threshold: error
+
+      - name: Repository Vulnerability Scan (Trivy)
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '0'
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Docker Container Build Verification
+  # ───────────────────────────────────────────────────────────────────────────
+  docker-build:
+    name: Docker Build Verification
+    needs: [backend-ci, frontend-ci]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: ecommerce-backend:ci
+
+      - name: Build Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: ecommerce-frontend:ci

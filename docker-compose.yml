@@ -1,0 +1,138 @@
+# ═══════════════════════════════════════════════════════════════════════
+# Docker Compose — E-Commerce Order System
+# Services: mongodb (replica set) · backend (FastAPI) · frontend (nginx)
+# ═══════════════════════════════════════════════════════════════════════
+#
+# WHY REPLICA SET?
+# ────────────────
+# MongoDB multi-document ACID transactions require a replica set.
+# In the order-creation flow, three collections are modified atomically:
+#   1. orders     — INSERT new order
+#   2. inventory  — DECREMENT quantity (atomic $inc)
+#   3. carts      — CLEAR cart items
+#
+# A standalone mongod does NOT support multi-document transactions.
+# If it were standalone and step 2 or 3 failed after step 1, the data
+# would be left in an inconsistent state (orphan order, un-reduced
+# inventory, un-cleared cart).
+#
+# This compose file starts MongoDB with --replSet rs0 and uses a
+# mongo-init service to call rs.initiate() exactly once on first start.
+#
+# WHY NOT localhost INSIDE CONTAINERS?
+# ──────────────────────────────────────
+# Inside any Docker container, 'localhost' refers to that container's
+# own loopback interface — not the host machine and not any other
+# container. Docker Compose creates a shared bridge network and assigns
+# each service a DNS name matching its service name. Therefore:
+#   backend → mongodb://mongodb:27017 ✓ (resolves to MongoDB container)
+#   backend → mongodb://localhost:27017 ✗ (resolves to backend itself)
+
+services:
+
+  # ── MongoDB (single-node replica set rs0) ──────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: ecommerce-mongodb
+    command: >
+      mongod
+      --replSet rs0
+      --bind_ip_all
+      --port 27017
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - ecommerce-network
+    ports:
+      - "27017:27017"     # Expose for local development tools (e.g. Compass)
+    healthcheck:
+      test: >
+        mongosh --quiet --eval
+        "try { rs.status().ok } catch(e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]}).ok }"
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ── Replica Set Initializer ─────────────────────────────────────────
+  # Runs once to initiate the replica set.
+  # Uses --eval to call rs.initiate() if not already initiated.
+  # 'depends_on' ensures MongoDB is healthy before this runs.
+  mongo-init:
+    image: mongo:7
+    container_name: ecommerce-mongo-init
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    command: >
+      mongosh --host mongodb:27017 --quiet --eval
+      "
+      if (rs.status().ok !== 1) {
+        rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongodb:27017' }] });
+        print('Replica set initiated');
+      } else {
+        print('Replica set already initiated');
+      }
+      "
+    restart: "no"   # Run once and exit
+
+  # ── Backend (FastAPI + PyMongo) ────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ecommerce-backend
+    environment:
+      # IMPORTANT: Use service name 'mongodb', NOT localhost.
+      # MongoDB URI includes the replica set name required for transactions.
+      MONGO_URI: "mongodb://mongodb:27017/?replicaSet=rs0"
+      MONGO_DB_NAME: "ecommerce"
+      APP_NAME: "E-Commerce Order System"
+      DEBUG: "${DEBUG:-false}"
+    ports:
+      - "8000:8000"
+    networks:
+      - ecommerce-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ── Frontend (React + Vite → nginx) ───────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ecommerce-frontend
+    ports:
+      - "80:80"       # Access the app at http://localhost
+    networks:
+      - ecommerce-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+# ── Volumes ────────────────────────────────────────────────────────────
+# Named volume ensures MongoDB data persists across container restarts.
+# 'docker compose down' preserves data.
+# 'docker compose down -v' removes data (use for a clean reset).
+volumes:
+  mongodb_data:
+    driver: local
+
+# ── Networks ───────────────────────────────────────────────────────────
+# All services communicate on this internal bridge network.
+# MongoDB is NOT exposed externally by default in production.
+networks:
+  ecommerce-network:
+    driver: bridge

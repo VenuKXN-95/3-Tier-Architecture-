@@ -1,0 +1,58 @@
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+explicit_package_bases = true
+mypy_path = "."
+
+[tool.pylint.main]
+py-version = "3.11"
+ignore-paths = ["^tests/.*$"]
+
+[tool.pylint.format]
+max-line-length = 88
+
+[tool.pylint."messages control"]
+disable = [
+    "C0114", # missing-module-docstring
+    "C0115", # missing-class-docstring
+    "C0116", # missing-function-docstring
+    "R0903", # too-few-public-methods
+    "W0718", # catching-too-general-exception
+    "C0415", # import-outside-toplevel (used in FastAPI app lifespan/routers)
+    "W0621", # redefined-outer-name
+]
+
+[tool.bandit]
+targets = ["app"]
+exclude_dirs = ["tests"]
+skips = ["B101"] # assert_used in tests if any
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
