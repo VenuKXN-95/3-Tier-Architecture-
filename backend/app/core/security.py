@@ -13,7 +13,8 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain text password against a stored bcrypt hash (or plain text fallback)."""
+    """Verify a plain text password against a stored bcrypt hash
+    (or plain text fallback)."""
     if not hashed_password or not plain_password:
         return False
     # Fallback for legacy plain-text passwords
