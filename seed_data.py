@@ -89,23 +89,51 @@ def make_request(url, method="GET", data=None):
         err_body = e.read().decode("utf-8")
         return json.loads(err_body), e.code
 
+import re
+
+
+def slugify(text: str) -> str:
+    text = text.lower()
+    text = re.sub(r"[^\w\s-]", "", text)
+    return re.sub(r"[-\s]+", "-", text).strip("-")
+
+
 def seed():
     print("[*] Starting database seeding (5 Categories, 50 Products, 50 Inventory records)...")
 
     # 1. Create Categories
     created_categories = []
     for cat_data in CATEGORIES:
-        res, code = make_request(f"{API_BASE}/categories", "POST", cat_data)
+        payload = {
+            "name": cat_data["name"],
+            "slug": slugify(cat_data["name"]),
+            "description": cat_data.get("description", ""),
+        }
+        res, code = make_request(f"{API_BASE}/categories", "POST", payload)
         if code in (201, 200):
             print(f"  + Category created: [{res['id']}] {res['name']}")
             created_categories.append(res)
-        elif code == 409:
+        else:
             # Fetch existing
             cats, _ = make_request(f"{API_BASE}/categories", "GET")
-            existing = next((c for c in cats if c["name"] == cat_data["name"]), None)
+            existing = (
+                next(
+                    (
+                        c
+                        for c in (cats if isinstance(cats, list) else [])
+                        if c.get("slug") == payload["slug"]
+                        or c.get("name") == payload["name"]
+                    ),
+                    None,
+                )
+                if cats
+                else None
+            )
             if existing:
                 print(f"  > Category exists: [{existing['id']}] {existing['name']}")
                 created_categories.append(existing)
+            else:
+                print(f"  [X] Failed category: {res}")
 
     if len(created_categories) < 5:
         print("[X] Failed to resolve 5 categories")
@@ -121,6 +149,7 @@ def seed():
         cat_id = cat_id_map[item["cat_idx"]]
         prod_payload = {
             "name": item["name"],
+            "slug": slugify(item["name"]),
             "description": item["desc"],
             "price": item["price"],
             "image_url": item["img"],
@@ -130,14 +159,20 @@ def seed():
         if code in (201, 200):
             prod_id = res["id"]
             products_created += 1
-            # Create inventory
-            inv_payload = {"product_id": prod_id, "quantity": item["stock"]}
-            inv_res, inv_code = make_request(f"{API_BASE}/inventory", "POST", inv_payload)
+            # Create/update inventory
+            inv_payload = {"quantity": item["stock"]}
+            inv_res, inv_code = make_request(
+                f"{API_BASE}/inventory/{prod_id}", "PUT", inv_payload
+            )
             if inv_code in (201, 200):
                 inventory_created += 1
-                print(f"  + Product #{products_created}: '{item['name']}' (${item['price']}) | Stock: {item['stock']}")
+                print(
+                    f"  + Product #{products_created}: '{item['name']}' (${item['price']}) | Stock: {item['stock']}"
+                )
             else:
-                print(f"  ! Product #{products_created} created, but inventory failed: {inv_res}")
+                print(
+                    f"  ! Product #{products_created} created, but inventory failed: {inv_res}"
+                )
         else:
             print(f"  - Failed to create product '{item['name']}': {res}")
 
@@ -145,6 +180,7 @@ def seed():
     print(f"   Categories: {len(created_categories)}")
     print(f"   Products:   {products_created}/50")
     print(f"   Inventory:  {inventory_created}/50")
+
 
 if __name__ == "__main__":
     seed()
