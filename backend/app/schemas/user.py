@@ -22,7 +22,6 @@ class UserCreate(UserBase):
     password: str = Field(..., min_length=6, max_length=72)
 
 
-
 class UserLogin(BaseModel):
     email: EmailStr
     password: str

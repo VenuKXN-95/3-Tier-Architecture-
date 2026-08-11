@@ -26,9 +26,7 @@ def login(credentials: UserLogin):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
-    access_token = create_access_token(
-        data={"sub": user["id"], "email": user["email"]}
-    )
+    access_token = create_access_token(data={"sub": user["id"], "email": user["email"]})
     return TokenResponse(access_token=access_token, token_type="bearer", user=user)
 
 
