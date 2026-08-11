@@ -36,7 +36,17 @@ def get_database() -> Database:
 
 
 def _create_indexes(db: Database) -> None:
-    db.categories.create_index("slug", unique=True)
-    db.products.create_index("slug", unique=True)
-    db.inventory.create_index("product_id", unique=True)
-    db.carts.create_index("user_id", unique=True)
+    _safe_create_index(db.categories, "slug")
+    _safe_create_index(db.products, "slug")
+    _safe_create_index(db.inventory, "product_id")
+    _safe_create_index(db.carts, "user_id")
+
+
+def _safe_create_index(collection, field: str) -> None:
+    try:
+        collection.delete_many({field: None})
+        collection.create_index(field, unique=True)
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        logger.warning(
+            "Failed to create index on %s.%s: %s", collection.name, field, exc
+        )
