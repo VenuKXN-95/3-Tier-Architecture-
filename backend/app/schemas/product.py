@@ -27,6 +27,8 @@ class ProductUpdate(BaseModel):
 class ProductResponse(ProductBase):
     id: str
     stock: int = 0
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
     class Config:
         from_attributes = True

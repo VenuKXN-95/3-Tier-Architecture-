@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import List, Optional
 from bson import ObjectId
 from app.database.mongodb import get_database
@@ -10,6 +11,12 @@ class ProductRepository:
 
     def create(self, product_data: dict) -> dict:
         stock = product_data.pop("stock", 0)
+        now_iso = datetime.now(timezone.utc).isoformat()
+        if "created_at" not in product_data:
+            product_data["created_at"] = now_iso
+        if "updated_at" not in product_data:
+            product_data["updated_at"] = now_iso
+
         result = self.db.products.insert_one(product_data)
         prod_id = str(result.inserted_id)
         product_data["id"] = prod_id
@@ -30,6 +37,9 @@ class ProductRepository:
         if not doc:
             return None
         doc["id"] = str(doc.pop("_id"))
+        now_iso = datetime.now(timezone.utc).isoformat()
+        doc["created_at"] = doc.get("created_at") or now_iso
+        doc["updated_at"] = doc.get("updated_at") or now_iso
         inv = self.db.inventory.find_one({"product_id": doc["id"]})
         doc["stock"] = inv["quantity"] if inv else 0
         return doc
@@ -39,8 +49,11 @@ class ProductRepository:
         if category_id:
             query["category_id"] = category_id
         docs = list(self.db.products.find(query))
+        now_iso = datetime.now(timezone.utc).isoformat()
         for doc in docs:
             doc["id"] = str(doc.pop("_id"))
+            doc["created_at"] = doc.get("created_at") or now_iso
+            doc["updated_at"] = doc.get("updated_at") or now_iso
             inv = self.db.inventory.find_one({"product_id": doc["id"]})
             doc["stock"] = inv["quantity"] if inv else 0
         return docs
@@ -50,6 +63,7 @@ class ProductRepository:
             return None
         clean = {k: v for k, v in update_data.items() if v is not None}
         if clean:
+            clean["updated_at"] = datetime.now(timezone.utc).isoformat()
             self.db.products.update_one({"_id": ObjectId(product_id)}, {"$set": clean})
         return self.get_by_id(product_id)
 

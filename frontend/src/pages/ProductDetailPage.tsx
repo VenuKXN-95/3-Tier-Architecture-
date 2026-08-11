@@ -7,20 +7,19 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, ShoppingCart, Package, Tag } from 'lucide-react'
 import { productsApi, inventoryApi, cartApi } from '@/services/api'
 import type { Product, InventoryRecord } from '@/types'
-import { formatPrice, formatDate } from '@/lib/utils'
+import { formatPrice, formatDate, getUserId } from '@/lib/utils'
 import { Loading } from '@/components/ui/Loading'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useData } from '@/hooks/useData'
 
-const DEMO_USER_ID = import.meta.env.VITE_DEMO_USER_ID ?? ''
-
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [adding, setAdding] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const demoUserId = getUserId()
 
   const { data: product, loading, error } = useData<Product>(
     () => productsApi.get(id!),
@@ -33,13 +32,13 @@ export function ProductDetailPage() {
   )
 
   const handleAddToCart = async () => {
-    if (!DEMO_USER_ID) {
+    if (!demoUserId) {
       setMessage({ type: 'error', text: 'Please create a user on the Profile page first.' })
       return
     }
     setAdding(true)
     try {
-      await cartApi.addItem(DEMO_USER_ID, { product_id: id!, quantity: 1 })
+      await cartApi.addItem(demoUserId, { product_id: id!, quantity: 1 })
       setMessage({ type: 'success', text: 'Added to cart!' })
     } catch (err) {
       setMessage({ type: 'error', text: (err as Error).message })
@@ -83,7 +82,7 @@ export function ProductDetailPage() {
               <h1 className="text-lg font-semibold text-text-1">{product.name}</h1>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Tag className="w-3 h-3 text-text-3" aria-hidden="true" />
-                <span className="text-xs text-text-3 font-mono">{product.category_id}</span>
+                <span className="text-xs text-text-3 font-mono">{product.id}</span>
               </div>
             </div>
           </div>

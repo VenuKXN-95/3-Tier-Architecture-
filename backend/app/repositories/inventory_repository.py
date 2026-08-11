@@ -21,3 +21,17 @@ class InventoryRepository:
             upsert=True,
         )
         return {"product_id": product_id, "quantity": quantity}
+
+    def decrement_stock(self, product_id: str, amount: int) -> bool:
+        res = self.db.inventory.update_one(
+            {"product_id": product_id, "quantity": {"$gte": amount}},
+            {"$inc": {"quantity": -amount}},
+        )
+        return res.modified_count > 0
+
+    def increment_stock(self, product_id: str, amount: int) -> None:
+        self.db.inventory.update_one(
+            {"product_id": product_id},
+            {"$inc": {"quantity": amount}},
+            upsert=True,
+        )

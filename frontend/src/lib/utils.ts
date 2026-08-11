@@ -28,14 +28,24 @@ export function formatPrice(price: number, currency = 'INR'): string {
 /**
  * Format an ISO date string to a human-readable format.
  */
-export function formatDate(isoString: string): string {
+export function formatDate(isoString?: string | null): string {
+  if (!isoString) return 'N/A'
+  const d = new Date(isoString)
+  if (isNaN(d.getTime())) return 'N/A'
   return new Intl.DateTimeFormat('en-IN', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(isoString))
+  }).format(d)
+}
+
+/**
+ * Get the current user ID from localStorage or environment fallback.
+ */
+export function getUserId(): string {
+  return localStorage.getItem('demo_user_id') || import.meta.env.VITE_DEMO_USER_ID || ''
 }
 
 /**
@@ -45,3 +55,4 @@ export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text
   return text.slice(0, maxLength).trimEnd() + '…'
 }
+

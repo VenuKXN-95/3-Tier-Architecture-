@@ -48,3 +48,13 @@ class OrderRepository:
         for doc in docs:
             doc["id"] = str(doc.pop("_id"))
         return docs
+
+    def cancel_order(self, order_id: str) -> Optional[dict]:
+        if not ObjectId.is_valid(order_id):
+            return None
+        now_iso = datetime.now(timezone.utc).isoformat()
+        self.db.orders.update_one(
+            {"_id": ObjectId(order_id)},
+            {"$set": {"status": "CANCELLED", "updated_at": now_iso}},
+        )
+        return self.get_by_id(order_id)

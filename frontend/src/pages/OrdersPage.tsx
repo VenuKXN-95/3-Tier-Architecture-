@@ -6,14 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ClipboardList } from 'lucide-react'
 import { usersApi, ordersApi } from '@/services/api'
 import type { Order } from '@/types'
+import { getUserId } from '@/lib/utils'
 import { OrderDetails } from '@/components/orders/OrderDetails'
 import { Loading } from '@/components/ui/Loading'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { useData } from '@/hooks/useData'
 
-const DEMO_USER_ID = import.meta.env.VITE_DEMO_USER_ID ?? ''
-
 export function OrdersPage() {
+  const demoUserId = getUserId()
   const [cancellingId, setCancellingId] = useState<string | null>(null)
 
   const {
@@ -22,8 +22,8 @@ export function OrdersPage() {
     error,
     refetch,
   } = useData<Order[]>(
-    () => usersApi.getOrders(DEMO_USER_ID),
-    [DEMO_USER_ID],
+    () => usersApi.getOrders(demoUserId),
+    [demoUserId],
   )
 
   const handleCancel = useCallback(async (orderId: string) => {
@@ -38,7 +38,7 @@ export function OrdersPage() {
     }
   }, [refetch])
 
-  if (!DEMO_USER_ID) {
+  if (!demoUserId) {
     return (
       <div className="p-6">
         <ErrorMessage message="Please create a user on the Profile page first to view orders." />

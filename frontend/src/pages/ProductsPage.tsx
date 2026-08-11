@@ -6,16 +6,15 @@ import { motion } from 'framer-motion'
 import { Package } from 'lucide-react'
 import { productsApi, cartApi, categoriesApi } from '@/services/api'
 import type { Product, Category } from '@/types'
+import { getUserId } from '@/lib/utils'
 import { ProductCard } from '@/components/products/ProductCard'
 import { CategoryFilter } from '@/components/products/CategoryFilter'
 import { Loading } from '@/components/ui/Loading'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { useData } from '@/hooks/useData'
 
-// Demo user — in a real app this comes from auth context
-const DEMO_USER_ID = import.meta.env.VITE_DEMO_USER_ID ?? ''
-
 export function ProductsPage() {
+  const demoUserId = getUserId()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [addingProductId, setAddingProductId] = useState<string | null>(null)
   const [cartMessage, setCartMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -32,14 +31,14 @@ export function ProductsPage() {
   } = useData<Category[]>(() => categoriesApi.list(), [])
 
   const handleAddToCart = useCallback(async (product: Product) => {
-    if (!DEMO_USER_ID) {
+    if (!demoUserId) {
       setCartMessage({ type: 'error', text: 'Please create a user first on the Profile page.' })
       setTimeout(() => setCartMessage(null), 4000)
       return
     }
     setAddingProductId(product.id)
     try {
-      await cartApi.addItem(DEMO_USER_ID, { product_id: product.id, quantity: 1 })
+      await cartApi.addItem(demoUserId, { product_id: product.id, quantity: 1 })
       setCartMessage({ type: 'success', text: `${product.name} added to cart!` })
     } catch (err) {
       setCartMessage({ type: 'error', text: (err as Error).message })
@@ -47,7 +46,8 @@ export function ProductsPage() {
       setAddingProductId(null)
       setTimeout(() => setCartMessage(null), 3000)
     }
-  }, [])
+  }, [demoUserId])
+
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

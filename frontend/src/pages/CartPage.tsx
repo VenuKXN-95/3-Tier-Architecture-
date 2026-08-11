@@ -6,16 +6,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingCart, ArrowRight, Package } from 'lucide-react'
 import { cartApi, ordersApi, productsApi } from '@/services/api'
 import type { Cart, Product } from '@/types'
-import { formatPrice } from '@/lib/utils'
+import { getUserId, formatPrice } from '@/lib/utils'
 import { CartItem } from '@/components/cart/CartItem'
 import { Loading } from '@/components/ui/Loading'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { Button } from '@/components/ui/Button'
 import { useData } from '@/hooks/useData'
 
-const DEMO_USER_ID = import.meta.env.VITE_DEMO_USER_ID ?? ''
-
 export function CartPage() {
+  const demoUserId = getUserId()
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [placingOrder, setPlacingOrder] = useState(false)
   const [orderMessage, setOrderMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -25,7 +24,7 @@ export function CartPage() {
     loading,
     error,
     refetch,
-  } = useData<Cart>(() => cartApi.get(DEMO_USER_ID), [DEMO_USER_ID])
+  } = useData<Cart>(() => cartApi.get(demoUserId), [demoUserId])
 
   const { data: products } = useData<Product[]>(() => productsApi.list(), [])
 
@@ -33,36 +32,36 @@ export function CartPage() {
     products?.find((p) => p.id === productId)?.name
 
   const handleUpdate = useCallback(async (productId: string, quantity: number) => {
-    if (!DEMO_USER_ID) return
+    if (!demoUserId) return
     setUpdatingId(productId)
     try {
-      await cartApi.updateItem(DEMO_USER_ID, productId, { quantity })
+      await cartApi.updateItem(demoUserId, productId, { quantity })
       refetch()
     } catch (err) {
       console.error(err)
     } finally {
       setUpdatingId(null)
     }
-  }, [refetch])
+  }, [demoUserId, refetch])
 
   const handleRemove = useCallback(async (productId: string) => {
-    if (!DEMO_USER_ID) return
+    if (!demoUserId) return
     setUpdatingId(productId)
     try {
-      await cartApi.removeItem(DEMO_USER_ID, productId)
+      await cartApi.removeItem(demoUserId, productId)
       refetch()
     } catch (err) {
       console.error(err)
     } finally {
       setUpdatingId(null)
     }
-  }, [refetch])
+  }, [demoUserId, refetch])
 
   const handlePlaceOrder = useCallback(async () => {
-    if (!DEMO_USER_ID) return
+    if (!demoUserId) return
     setPlacingOrder(true)
     try {
-      const order = await ordersApi.create(DEMO_USER_ID)
+      const order = await ordersApi.create(demoUserId)
       setOrderMessage({
         type: 'success',
         text: `Order placed! ID: ${order.id}`,
@@ -74,14 +73,14 @@ export function CartPage() {
       setPlacingOrder(false)
       setTimeout(() => setOrderMessage(null), 5000)
     }
-  }, [refetch])
+  }, [demoUserId, refetch])
 
   const total = cart?.items.reduce(
     (sum, item) => sum + item.unit_price * item.quantity,
     0,
   ) ?? 0
 
-  if (!DEMO_USER_ID) {
+  if (!demoUserId) {
     return (
       <div className="p-6">
         <ErrorMessage message="Please create a user on the Profile page first to use the cart." />
