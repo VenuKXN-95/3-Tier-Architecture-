@@ -1,7 +1,7 @@
 # 🛒 Enterprise 3-Tier E-Commerce Platform
 
-> **Full-Stack E-Commerce Platform with FastAPI Backend, MongoDB Database, and React TypeScript Frontend**  
-> 📖 **[Master CI/CD & Security Architecture Documentation](file:///c:/devops/Practice/3-Tier%20Architecture%20with%20Mongo%20DB/CI_CD_MASTER_DOCUMENTATION.md)** | **[Interview Guide](file:///c:/devops/Practice/3-Tier%20Architecture%20with%20Mongo%20DB/CI_CD_ARCHITECTURE_AND_INTERVIEW_GUIDE.md)** | **[Manual Quality Gates](file:///c:/devops/Practice/3-Tier%20Architecture%20with%20Mongo%20DB/MANUAL_CI_QUALITY_GATES.md)**
+> **Full-Stack E-Commerce Platform with FastAPI Backend, MongoDB Database, and React TypeScript Frontend**
+> 📖 **[Master CI/CD &amp; Security Architecture Documentation](<file:///c:/devops/Practice/3-Tier%20Architecture%20with%20Mongo%20DB/CI_CD_MASTER_DOCUMENTATION.md>)** | **[Interview Guide](<file:///c:/devops/Practice/3-Tier%20Architecture%20with%20Mongo%20DB/CI_CD_ARCHITECTURE_AND_INTERVIEW_GUIDE.md>)** | **[Manual Quality Gates](<file:///c:/devops/Practice/3-Tier%20Architecture%20with%20Mongo%20DB/MANUAL_CI_QUALITY_GATES.md>)**
 
 [![CI/CD Pipeline](https://github.com/VenuKXN-95/3-Tier-Architecture-/actions/workflows/ci.yml/badge.svg)](https://github.com/VenuKXN-95/3-Tier-Architecture-/actions/workflows/ci.yml)
 
@@ -471,19 +471,22 @@ Developers can run all CI checks locally prior to opening a pull request using t
 Execute all GitHub Actions quality gates in a single command with optional auto-repair for formatting/linting:
 
 * **POSIX Shell (Linux / macOS / Git Bash)**:
+
   ```bash
   ./scripts/ci.sh
   # Fast check with auto-repair:
   ./scripts/ci.sh --fast --fix
   ```
-  *(Options: `--fix`, `--backend-only`, `--frontend-only`, `--security-only`, `--skip-docker`, `--fast`, `--sonar`)*
 
+  *(Options: `--fix`, `--backend-only`, `--frontend-only`, `--security-only`, `--skip-docker`, `--fast`, `--sonar`)*
 * **Windows PowerShell**:
+
   ```powershell
   .\run-ci-gates.ps1
   # Fast check:
   .\run-ci-gates.ps1 -Fast
   ```
+
   *(Switches: `-Fix`, `-BackendOnly`, `-FrontendOnly`, `-SecurityOnly`, `-SkipDocker`, `-Fast`)*
 
 ---
@@ -549,3 +552,6 @@ with self._client.start_session() as session:
 ```
 
 If any step fails (e.g. out of stock), the transaction automatically aborts and rolls back all modifications.
+
+
+#
