@@ -143,18 +143,14 @@ jobs:
           name: backend-coverage-report
           path: backend
 
-      - name: SonarQube / SonarCloud Scan
-        uses: sonarsource/sonarqube-scan-action@v4.1.0
+      - name: SonarQube / SonarCloud Scan & Quality Gate
+        uses: sonarsource/sonarqube-scan-action@v5.0.0
+        with:
+          args: >
+            -Dsonar.qualitygate.wait=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        continue-on-error: true
-
-      - name: SonarQube Quality Gate Enforcement
-        uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         continue-on-error: true
 
   # ───────────────────────────────────────────────────────────────────────────
