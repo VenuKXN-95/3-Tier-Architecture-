@@ -68,5 +68,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
-# adding comment for checking purpose123
