@@ -144,7 +144,7 @@ jobs:
           path: backend
 
       - name: SonarQube / SonarCloud Scan
-        uses: sonarsource/sonarqube-scan-action@v5.0.0
+        uses: sonarsource/sonarqube-scan-action@v4.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
@@ -190,7 +190,7 @@ jobs:
           failure-threshold: error
 
       - name: Repository Filesystem Security Scan (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           ignore-unfixed: true
@@ -222,7 +222,7 @@ jobs:
           docker build -t ecommerce-frontend:${{ github.sha }} ./frontend
 
       - name: Trivy Vulnerability Scan (Backend Image)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'ecommerce-backend:${{ github.sha }}'
           format: 'table'
@@ -231,7 +231,7 @@ jobs:
           severity: 'HIGH,CRITICAL'
 
       - name: Trivy Vulnerability Scan (Frontend Image)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'ecommerce-frontend:${{ github.sha }}'
           format: 'table'
