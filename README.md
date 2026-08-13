@@ -1,4 +1,7 @@
-# ShopFlow — E-Commerce Order System (3-Tier MongoDB Stack)
+# 🛒 Enterprise 3-Tier E-Commerce Platform
+
+> **Full-Stack E-Commerce Platform with FastAPI Backend, MongoDB Database, and React TypeScript Frontend**  
+> 📖 **[Master CI/CD & Security Architecture Documentation](file:///c:/devops/Practice/3-Tier%20Architecture%20with%20Mongo%20DB/CI_CD_MASTER_DOCUMENTATION.md)** | **[Interview Guide](file:///c:/devops/Practice/3-Tier%20Architecture%20with%20Mongo%20DB/CI_CD_ARCHITECTURE_AND_INTERVIEW_GUIDE.md)** | **[Manual Quality Gates](file:///c:/devops/Practice/3-Tier%20Architecture%20with%20Mongo%20DB/MANUAL_CI_QUALITY_GATES.md)**
 
 [![CI/CD Pipeline](https://github.com/VenuKXN-95/3-Tier-Architecture-/actions/workflows/ci.yml/badge.svg)](https://github.com/VenuKXN-95/3-Tier-Architecture-/actions/workflows/ci.yml)
 
