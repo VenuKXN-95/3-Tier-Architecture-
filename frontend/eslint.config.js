@@ -5,7 +5,7 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['dist', 'node_modules', 'vite.config.ts', '*.tsbuildinfo'],
+    ignores: ['dist', 'node_modules', 'vite.config.*', '*.timestamp-*.mjs', '*.tsbuildinfo'],
   },
   js.configs.recommended,
   {

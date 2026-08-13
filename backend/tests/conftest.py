@@ -37,11 +37,14 @@ from app.main import create_app
 # ── Test MongoDB URI ──────────────────────────────────────────────────
 TEST_MONGO_URI = os.getenv(
     "MONGO_URI",
-    # directConnection=true bypasses replica-set topology discovery so local
-    # tests can reach the container on host port 27018 even though the RS was
-    # initiated with the internal Docker hostname 'mongodb:27017'.
     "mongodb://localhost:27018/?directConnection=true",
 )
+if (
+    "localhost" in TEST_MONGO_URI or "127.0.0.1" in TEST_MONGO_URI
+) and "directConnection=" not in TEST_MONGO_URI:
+    sep = "&" if "?" in TEST_MONGO_URI else "?"
+    TEST_MONGO_URI += f"{sep}directConnection=true"
+
 TEST_DB_NAME = "ecommerce_test"
 
 

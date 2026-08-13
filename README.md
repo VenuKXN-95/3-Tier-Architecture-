@@ -461,9 +461,33 @@ This repository includes an enterprise-grade **GitHub Actions CI/CD Pipeline** (
 
 ### Running Checks Locally
 
-Developers can run all CI checks locally prior to opening a pull request:
+Developers can run all CI checks locally prior to opening a pull request using the automated runner scripts or running commands manually:
 
-#### Backend Quality Checks
+#### Automated Local CI Runners with Self-Healing
+
+Execute all GitHub Actions quality gates in a single command with optional auto-repair for formatting/linting:
+
+* **POSIX Shell (Linux / macOS / Git Bash)**:
+  ```bash
+  ./scripts/ci.sh
+  # Fast check with auto-repair:
+  ./scripts/ci.sh --fast --fix
+  ```
+  *(Options: `--fix`, `--backend-only`, `--frontend-only`, `--security-only`, `--skip-docker`, `--fast`, `--sonar`)*
+
+* **Windows PowerShell**:
+  ```powershell
+  .\run-ci-gates.ps1
+  # Fast check:
+  .\run-ci-gates.ps1 -Fast
+  ```
+  *(Switches: `-Fix`, `-BackendOnly`, `-FrontendOnly`, `-SecurityOnly`, `-SkipDocker`, `-Fast`)*
+
+---
+
+#### Manual Step-by-Step Checks
+
+##### Backend Quality Checks
 
 ```bash
 cd backend
